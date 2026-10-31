@@ -1,0 +1,38 @@
+name: Train EcoSnap Classifier
+
+on:
+  workflow_dispatch:
+
+jobs:
+  train:
+    runs-on: macos-14
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Verify dataset folder exists
+        run: |
+          if [ ! -d "$GITHUB_WORKSPACE/CleanDataset" ]; then
+            echo "ERROR: CleanDataset/ tidak ditemukan di root repo."
+            exit 1
+          fi
+          ls -1 "$GITHUB_WORKSPACE/CleanDataset"
+
+      - name: Train model via CreateML
+        run: >
+          swift run
+          --package-path Trainer
+          TrainEcoSnap
+          "$GITHUB_WORKSPACE/CleanDataset"
+          "$GITHUB_WORKSPACE/EcoSnapClassifier.mlmodel"
+
+      - name: Upload trained model
+        uses: actions/upload-artifact@v4
+        with:
+          name: EcoSnapClassifier
+          path: EcoSnapClassifier.mlmodel
